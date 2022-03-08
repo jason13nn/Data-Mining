@@ -1,0 +1,111 @@
+---
+title: "HW2_CS7331"
+author: "Yichien Chou"
+date: "2020/10/25"
+output:  pdf_document
+---
+
+#1
+
+```{r out.width = "500px", fig.align="center", echo=FALSE}
+library(knitr)
+include_graphics("/Users/jason13nn/Desktop/SMU/Fall 2020/CS 7331/data/IMG_ECB1306D754E-1.jpeg")
+```
+
+```{r}
+#read data
+load("/Users/jason13nn/Desktop/SMU/Fall 2020/CS 7331/data/hw2.RData")
+
+train <- data.frame(train)
+dim(train) #200 3
+test <- data.frame(test)
+dim(test) #200 3
+```
+
+#2
+
+```{r, eval=FALSE}
+#install.packages("osqp")
+library(osqp)
+
+linsvm <- function(data){
+  
+  y <- data[, 1] #response
+  X <- as.matrix(data[,-1]) #matrix of features
+  
+  res <- solve_osqp(t(X) %*% X, t(y) %*% X, matrix(nr=3, nc=0), numeric(), 0)
+  
+  w1 <- res$x[1]
+  b1 <- res$x[2]
+  
+  return(w1)
+  return(b1)
+}
+
+#outcome
+linsvm(train)
+```
+
+#3
+
+```{r}
+library(e1071)
+linsvm <- function(data){
+
+  y <- as.factor(data[,1])
+  X <- as.matrix(data[,-1])
+  data.svm <- svm(y ~ X, data = data)
+  output <- summary(data.svm)
+  return(output)
+}  
+
+linsvm(train)
+```
+
+#4
+
+```{r}
+linsvm.pred <- function(data){
+  
+  y <- as.factor(train[,1])
+  X <- as.matrix(train[,-1])
+  train.svm <- svm(y ~ X)
+  
+  data.y <- data[,1]
+  data.X <- as.matrix(data[,-1])
+  
+  pred <- predict(train.svm, data.X)
+  # misclassification rate
+  mr <- mean(pred != data.y)
+
+  return(cat("The misclassification rate:", mr))
+}  
+
+linsvm.pred(test)
+```
+
+#5
+
+```{r}
+linsvm.plot <- function(data){
+  library(ggplot2)
+  
+  train.y <- as.factor(train[,1])
+  train.X <- as.matrix(train[,-1])
+  train.svm <- svm(train.y ~ train.X)
+  
+  data.y <- data[,1]
+  data.X <- as.matrix(data[,-1])
+  
+  pred <- predict(train.svm, data.X)
+  
+  data <- cbind(data, pred)
+  
+  p <- ggplot(data= data, aes(x = Net.Sales, y = Age, color = pred)) +
+    geom_point()
+    
+  return(p)
+}
+
+linsvm.plot(test)
+```
